@@ -1,0 +1,15 @@
+# Ignore all CSV files
+*.csv
+
+# But keep final prediction file
+!prediction.csv
+
+# Ignore Mac junk
+__MACOSX/
+.DS_Store
+
+.ipynb_checkpoints/
+__pycache__/
+*.pyc
+
+*.joblib
