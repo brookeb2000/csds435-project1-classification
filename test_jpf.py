@@ -84,8 +84,7 @@ def main():
         else:
             print("Warning: Could not map best model name to a saved file key; pred_best.txt not written.")
     else:
-        print(f"\nWarning: summary file not found at {args.summary_in}. "
-              "pred_best.txt will not be written (still wrote per-model predictions).")
+        print(f"\nWarning: summary file not found at {args.summary_in}. ")
 
 if __name__ == "__main__":
     main()
