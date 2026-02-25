@@ -4,14 +4,12 @@ import joblib
 import numpy as np
 import pandas as pd
 
-
 def load_test_csv(path: str) -> np.ndarray:
     """
     loads testing.cv for validation
     """
     df = pd.read_csv(path)
     return df.to_numpy(dtype=np.float64)
-
 
 def write_predictions(preds: np.ndarray, out_path: str) -> None:
     """

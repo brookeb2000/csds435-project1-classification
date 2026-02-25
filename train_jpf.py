@@ -9,6 +9,8 @@ from sklearn.model_selection import StratifiedKFold, cross_val_score, GridSearch
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
 
 # region Data Loading
 
@@ -74,42 +76,72 @@ def train_svm(X, y, cv):
         y               label array
         cv              cross-validation object (splits set into 5 and shuffles training/testing)
     """
-    # RBF SVM commonly needs C and gamma tuning
-    param_grid = {
-        "C": [0.5, 1, 2, 5, 10],
-        "gamma": ["scale", 0.01, 0.03, 0.1],
-        "kernel": ["rbf"],
+    # build plipleine for scale then svm training
+    pipe = Pipeline([
+        ('scaler', StandardScaler()),
+        ('svc', SVC(kernel='rbf'))
+    ])
+
+    # set up coarse grid 
+    coarse_grid = {
+        'svc__C': [0.1, 1, 5, 10],
+        'svc__gamma': ['scale', 0.01]
     }
 
-    base = SVC()
-    grid = GridSearchCV(
-        estimator=base,
-        param_grid=param_grid,
+    # do coarse analysis
+    coarse_search = GridSearchCV(
+        estimator=pipe,
+        param_grid=coarse_grid,
         scoring="accuracy",
         cv=cv,
         n_jobs=-1,
         refit=True,
+        verbose=2,
         return_train_score=False,
     )
-    grid.fit(X, y)
+    coarse_search.fit(X, y)
 
-    best_model = grid.best_estimator_
-    # Use the CV performance reported by GridSearchCV for the best setting
-    best_mean = float(grid.best_score_)
+    # get best params
+    coarse_best = coarse_search.best_params_
+    best_C = coarse_best['svc__C']
+    best_gamma = coarse_best['svc__gamma']
+
+    # define fine grid around these bests
+    fine_grid = {
+        'svc__C': [best_C / 2, best_C, best_C * 2],
+        'svc__gamma': ([best_gamma] if best_gamma == 'scale' else [best_gamma / 2, best_gamma, best_gamma * 2]),
+    }
+
+    # do fine seasrch
+    fine_search = GridSearchCV(
+        pipe,
+        fine_grid,
+        scoring='accuracy',
+        cv=cv,
+        n_jobs=-1,
+        refit=True,
+        verbose=2
+    )
+    fine_search.fit(X,y)
+
+    # get best model and mean
+    best_model = fine_search.best_estimator_
+    best_mean = float(fine_search.best_score_)
 
     # Estimate std across folds for the chosen hyperparameters
-    # (GridSearchCV stores split scores in cv_results_)
-    best_idx = grid.best_index_
-    split_keys = [k for k in grid.cv_results_.keys() if k.startswith("split") and k.endswith("_test_score")]
-    split_scores = np.array([grid.cv_results_[k][best_idx] for k in split_keys], dtype=float)
+    best_idx = fine_search.best_index_
+    split_keys = [k for k in fine_search.cv_results_.keys() if k.startswith("split") and k.endswith("_test_score")]
+    split_scores = np.array([fine_search.cv_results_[k][best_idx] for k in split_keys], dtype=float)
     best_std = float(split_scores.std())
 
     info = {
-        "library": "sklearn.svm.SVC",
-        "best_params": grid.best_params_,
+        "library": "sklearn.pipeline.Pipeline(StandardScaler + SVC)",
+        "best_params": fine_search.best_params_,
         "cv_mean_acc": best_mean,
         "cv_std_acc": best_std,
         "cv_results_note": "CV mean/std derived from GridSearchCV best setting.",
+        "coarse_best_params": coarse_search.best_params_,
+        "coarse_best_score": float(coarse_search.best_score_),
     }
     return best_model, info
 
@@ -121,7 +153,8 @@ def train_random_forest(X, y, cv):
         y               label array
         cv              cross-validation object (splits set into 5 and shuffles training/testing)
     """
-    base = RandomForestClassifier(random_state=42, n_jobs=-1)
+    # get base and params
+    base = RandomForestClassifier(random_state=42, n_jobs=1)
 
     param_dist = {
         "n_estimators": [200, 400, 600],
@@ -130,6 +163,7 @@ def train_random_forest(X, y, cv):
         "min_samples_split": [2, 5, 10],
     }
 
+    # search CV space
     search = RandomizedSearchCV(
         estimator=base,
         param_distributions=param_dist,
@@ -139,10 +173,12 @@ def train_random_forest(X, y, cv):
         n_jobs=-1,
         random_state=42,
         refit=True,
+        verbose=2,
         return_train_score=False,
     )
     search.fit(X, y)
 
+    # get best stuff and save
     best_model = search.best_estimator_
     best_mean = float(search.best_score_)
 
