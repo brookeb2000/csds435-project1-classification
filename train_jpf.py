@@ -25,6 +25,22 @@ def load_training_csv(path: str):
     X = df.iloc[:, 1:].to_numpy(dtype=np.float64)
     return X, y
 
+def drop_constatnt_features(array, out_path="dropped_cols.npy"):
+    """
+    Drops constant features from a dataframe, returns datafram with 0 variance columns dropped and
+    saves the idx values of the columns dropped to out_path npy file
+    """
+    # calculate vars and save idx of 0 var
+    vars = np.var(array,axis=0)
+    dropped_cols = np.where(vars==0)[0]
+
+    # save dropped cols for access in testing
+    np.save(out_path,dropped_cols)
+
+    # drop columns and return new array
+    clean_array = np.delete(array,dropped_cols,axis=1)
+    return clean_array
+    
 # endregion
 
 # region Training
@@ -240,7 +256,8 @@ def main():
     parser.add_argument("--cv_folds", type=int, default=5, help="Number of stratified CV folds")
     args = parser.parse_args()
 
-    X, y = load_training_csv(args.train_csv)
+    X1, y = load_training_csv(args.train_csv)
+    X = drop_constatnt_features(X1)
 
     cv = StratifiedKFold(n_splits=args.cv_folds, shuffle=True, random_state=42)
 
@@ -266,7 +283,7 @@ def main():
         print(f"  Library: {info['library']}")
         print(f"  Best Params: {info['best_params']}\n")
 
-    # Determine best model (by mean CV accuracy)
+    # Determine best model by mean CV accuracy
     best_name = max(summary.keys(), key=lambda n: summary[n]["cv_mean_acc"])
     print(f"Best Model by mean CV accuracy: {best_name} "
           f"({summary[best_name]['cv_mean_acc']:.4f})")
@@ -276,7 +293,7 @@ def main():
     plot_accuracies(summary, fig_path)
     print(f"Saved figure to: {fig_path}")
 
-    # Also save a single summary bundle (optional but helpful)
+    # Save a single summary bundle
     save_bundle(os.path.join(args.models_dir, "training_summary.joblib"), model=None, info=summary)
     print(f"Saved training summary to: {os.path.join(args.models_dir, 'training_summary.joblib')}")
 

@@ -11,6 +11,14 @@ def load_test_csv(path: str) -> np.ndarray:
     df = pd.read_csv(path)
     return df.to_numpy(dtype=np.float64)
 
+def drop_cols(array,in_path="dropped_cols.npy"):
+    """
+    takes .npy file of columns to drop at in_path and drops them from the input array
+    """
+    dropped_cols = np.load(in_path)
+    clean_array = np.delete(array,dropped_cols,axis=1)
+    return clean_array
+
 def write_predictions(preds: np.ndarray, out_path: str) -> None:
     """
     Writes one prediction per line for outputting to file at out_path
@@ -31,7 +39,8 @@ def main():
                         help="Path to training summary joblib to identify best model")
     args = parser.parse_args()
 
-    X_test = load_test_csv(args.test_csv)
+    X_test1 = load_test_csv(args.test_csv)
+    X_test = drop_cols(X_test1)
 
     # These filenames must match what train_all.py saves
     model_files = {
