@@ -71,7 +71,7 @@ Trained models:
 - best_mlp_model.joblib
 
 Prediction files:
-- predictions.csv (best model – MLP)
+- prediction.csv (best model – MLP)
 - naive_bayes_predictions.csv
 - random_forest_predictions.csv
 - svm_predictions.csv
@@ -82,4 +82,4 @@ Each prediction file contains the predicted labels for the testing dataset.
 
 The file used for grading is:
 
-predictions.csv
+prediction.csv
