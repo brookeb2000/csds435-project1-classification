@@ -17,11 +17,11 @@ Based on performance on the training data, **MLP was selected as the best model*
 
 ## Files
 
-The following files should be in the same folder:
+The following files should be placed in the same folder:
 
-- model_training_validation_and_testing.ipynb
-- training.csv
-- testing.csv
+model_training_validation_and_testing.ipynb  
+training.csv  
+testing.csv   
 
 ---
 
@@ -43,11 +43,7 @@ pip install numpy pandas scikit-learn joblib matplotlib
 
 ## How to Run
 
-1. Place the following files in the same folder:
-
-model_training_validation_and_testing.ipynb  
-training.csv  
-testing.csv  
+1. Place the files listed above in the same folder.
 
 2. Open the notebook:
 
@@ -57,7 +53,7 @@ model_training_validation_and_testing.ipynb
 
 The notebook will:
 - Train all six models
-- Evaluate them on the training data
+- Save the trained models as `.joblib` files
 - Generate predictions for the testing dataset
 
 ---
@@ -66,14 +62,23 @@ The notebook will:
 
 Running the notebook will generate the following files:
 
-predictions.csv  
-naive_bayes_predictions.csv  
-random_forest_predictions.csv  
-svm_predictions.csv  
-knn_predictions.csv  
-adaboost_predictions.csv  
+Trained models:
+- best_naive_bayes_model.joblib
+- best_random_forest_model.joblib
+- best_svm_model.joblib
+- best_knn_model_no_scaling.joblib
+- best_adaboost_model.joblib
+- best_mlp_model.joblib
 
-Each file contains the predicted labels for the testing dataset.
+Prediction files:
+- predictions.csv (best model – MLP)
+- naive_bayes_predictions.csv
+- random_forest_predictions.csv
+- svm_predictions.csv
+- knn_predictions.csv
+- adaboost_predictions.csv
+
+Each prediction file contains the predicted labels for the testing dataset.
 
 The file used for grading is:
 
